@@ -1,0 +1,23 @@
+language: generic
+sudo: required
+services:
+  - docker
+
+before_install:
+  - docker build -t rhye/react-test -f ./client/Dockerfile.dev ./client
+
+script:
+  - docker run -e CI=true rhye/react-test npm test
+
+after_success:
+  - docker build -t rhye/multi-client ./client
+  - docker build -t rhye/multi-nginx ./nginx
+  - docker build -t rhye/multi-server ./server
+  - docker build -t rhye/multi-worker ./worker
+  # Login to docker CLI
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+  # Take those images and push to docker hub
+  - docker push rhye/multi-client
+  - docker push rhye/multi-nginx
+  - docker push rhye/multi-server
+  - docker push rhye/multi-worker
